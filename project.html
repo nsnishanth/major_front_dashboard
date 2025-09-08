@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FraudShield AI | Credit Card Fraud Detection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #e74c3c;
+            --accent-light: #ff6b6b;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #7f8c8d;
+            --text: #2c3e50;
+            --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: var(--primary);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            width: 250px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .logo span {
+            color: var(--accent-light);
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .nav-links li {
+            margin-bottom: 5px;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: #ddd;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            grid-column: 2;
+            padding: 20px 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h2 {
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-card .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .stat-card .label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .stat-card .trend {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .trend.up {
+            color: var(--success);
+        }
+
+        .trend.down {
+            color: var(--accent);
+        }
+
+        /* Charts Section */
+        .charts {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        /* Transactions Table */
+        .transactions {
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        thead {
+            background: var(--secondary);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status.flagged {
+            background: #ffeceb;
+            color: var(--accent);
+        }
+
+        .status.verified {
+            background: #e6f7ee;
+            color: var(--success);
+        }
+
+        .status.pending {
+            background: #fef5e6;
+            color: var(--warning);
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Chatbot Section */
+        .chatbot-section {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .chatbot-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .chatbot-container {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 350px;
+            height: 450px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-container.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .chatbot-header {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-header h3 {
+            font-weight: 500;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+        }
+
+        .message.bot {
+            background: #f0f2f5;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .chatbot-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .chatbot-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .chatbot-input button {
+            margin-left: 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                grid-column: 1;
+            }
+            
+            .charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .user-info {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Fraud<span>Shield</span> AI</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="#"><i class="fas fa-credit-card"></i> Transactions</a></li>
+                <li><a href="#"><i class="fas fa-flag"></i> Flagged Items</a></li>
+                <li><a href="#"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="#"><i class="fas fa-question-circle"></i> Support</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h2>Fraud Detection Dashboard</h2>
+                <div class="user-info">
+                    <img src="https://randomuser.me/api/portraits/men/41.jpg" alt="User Profile">
+                    <div>
+                        <div>Admin User</div>
+                        <small>Administrator</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Cards -->
+            <div class="dashboard-cards">
+                <div class="card stat-card">
+                    <div class="label">TOTAL TRANSACTIONS</div>
+                    <div class="value">12,487</div>
+                    <div class="trend up">
+                        <i class="fas fa-arrow-up"></i> 12.4% from last month
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="label">FLAGGED TRANSACTIONS</div>
+                    <div class="value">347</div>
+                    <div class="trend up">
+                        <i class="fas fa-arrow-up"></i> 3.2% from last month
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="label">FRAUD CONFIRMED</div>
+                    <div class="value">28</div>
+                    <div class="trend down">
+                        <i class="fas fa-arrow-down"></i> 2.1% from last month
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="label">SAVINGS PREVENTED</div>
+                    <div class="value">$124,820</div>
+                    <div class="trend up">
+                        <i class="fas fa-arrow-up"></i> 8.7% from last month
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Fraud Detection Overview</div>
+                        <select>
+                            <option>Last 7 Days</option>
+                            <option>Last 30 Days</option>
+                            <option>Last 90 Days</option>
+                        </select>
+                    </div>
+                    <canvas id="fraudChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Transaction Types</div>
+                    </div>
+                    <canvas id="transactionTypeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="transactions">
+                <div class="table-header">
+                    <h3>Flagged Transactions</h3>
+                    <button class="btn btn-outline">Export Report</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#TX-7892</td>
+                            <td>John D.</td>
+                            <td>Oct 12, 2023</td>
+                            <td>$1,248.00</td>
+                            <td><span class="status flagged">Flagged</span></td>
+                            <td><button class="btn btn-primary">Verify</button></td>
+                        </tr>
+                        <tr>
+                            <td>#TX-4567</td>
+                            <td>Sarah M.</td>
+                            <td>Oct 11, 2023</td>
+                            <td>$2,467.00</td>
+                            <td><span class="status pending">Pending</span></td>
+                            <td><button class="btn btn-primary">Verify</button></td>
+                        </tr>
+                        <tr>
+                            <td>#TX-1234</td>
+                            <td>Robert P.</td>
+                            <td>Oct 10, 2023</td>
+                            <td>$3,789.00</td>
+                            <td><span class="status verified">Verified</span></td>
+                            <td><button class="btn btn-primary">View</button></td>
+                        </tr>
+                        <tr>
+                            <td>#TX-9876</td>
+                            <td>Emma W.</td>
+                            <td>Oct 10, 2023</td>
+                            <td>$892.00</td>
+                            <td><span class="status flagged">Flagged</span></td>
+                            <td><button class="btn btn-primary">Verify</button></td>
+                        </tr>
+                        <tr>
+                            <td>#TX-5432</td>
+                            <td>Michael T.</td>
+                            <td>Oct 9, 2023</td>
+                            <td>$1,576.00</td>
+                            <td><span class="status pending">Pending</span></td>
+                            <td><button class="btn btn-primary">Verify</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Chatbot Section -->
+        <div class="chatbot-section">
+            <div class="chatbot-toggle" id="chatbotToggle">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="chatbot-container" id="chatbotContainer">
+                <div class="chatbot-header">
+                    <h3>FraudShield Assistant</h3>
+                    <span><i class="fas fa-times" id="closeChatbot"></i></span>
+                </div>
+                <div class="chatbot-messages" id="chatbotMessages">
+                    <div class="message bot">
+                        Hello! I'm your fraud detection assistant. How can I help you today?
+                    </div>
+                    <div class="message user">
+                        I need to verify transaction #TX-7892
+                    </div>
+                    <div class="message bot">
+                        I can help with that. Transaction #TX-7892 for $1,248.00 was flagged due to unusual location. Would you like to initiate verification?
+                    </div>
+                </div>
+                <div class="chatbot-input">
+                    <input type="text" placeholder="Type your message..." id="chatbotInput">
+                    <button id="sendMessage"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle chatbot visibility
+        document.getElementById('chatbotToggle').addEventListener('click', function() {
+            document.getElementById('chatbotContainer').classList.toggle('active');
+        });
+
+        document.getElementById('closeChatbot').addEventListener('click', function() {
+            document.getElementById('chatbotContainer').classList.remove('active');
+        });
+
+        // Send message functionality
+        document.getElementById('sendMessage').addEventListener('click', function() {
+            const input = document.getElementById('chatbotInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                // Add user message
+                addMessage(message, 'user');
+                
+                // Clear input
+                input.value = '';
+                
+                // Simulate bot response after a short delay
+                setTimeout(() => {
+                    let botResponse = "I'm sorry, I didn't understand that. Can you please rephrase?";
+                    
+                    if (message.toLowerCase().includes('verify') || message.toLowerCase().includes('transaction')) {
+                        botResponse = "I can help you verify a transaction. Please provide the transaction ID or select from the flagged transactions list.";
+                    } else if (message.toLowerCase().includes('help') || message.toLowerCase().includes('support')) {
+                        botResponse = "I can assist with verifying transactions, explaining why a transaction was flagged, or providing fraud statistics. What do you need help with?";
+                    } else if (message.toLowerCase().includes('stat') || message.toLowerCase().includes('analytics')) {
+                        botResponse = "Currently, 2.8% of transactions are being flagged, with a 12% increase in fraud attempts this month. Would you like to see more detailed analytics?";
+                    }
+                    
+                    addMessage(botResponse, 'bot');
+                }, 1000);
+            }
+        });
+
+        // Allow sending message with Enter key
+        document.getElementById('chatbotInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('sendMessage').click();
+            }
+        });
+
+        function addMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', type);
+            messageDiv.textContent = text;
+            
+            document.getElementById('chatbotMessages').appendChild(messageDiv);
+            
+            // Scroll to bottom of messages
+            const messagesContainer = document.getElementById('chatbotMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fraud Detection Chart
+            const fraudCtx = document.getElementById('fraudChart').getContext('2d');
+            const fraudChart = new Chart(fraudCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    datasets: [{
+                        label: 'Flagged Transactions',
+                        data: [120, 150, 180, 200, 170, 210, 250, 280, 310, 347],
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }, {
+                        label: 'Confirmed Fraud',
+                        data: [15, 18, 20, 22, 19, 23, 25, 26, 27, 28],
+                        borderColor: '#2c3e50',
+                        backgroundColor: 'rgba(44, 62, 80, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+
+            // Transaction Type Chart
+            const typeCtx = document.getElementById('transactionTypeChart').getContext('2d');
+            const typeChart = new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Online', 'In-Store', 'ATM', 'International'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: [
+                            '#e74c3c',
+                            '#2c3e50',
+                            '#3498db',
+                            '#2ecc71'
+                        ],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
